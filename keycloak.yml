@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  mariadb:
+    image: mariadb:10.3.14
+    deploy:
+      labels:
+        traefik.enabled: 'false'
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=keycloak
+      - MYSQL_USER=keycloak
+      - MYSQL_PASSWORD=password
+    # volumes:
+    #   - type: volume
+    #     source: volumes/keycloak-db
+    #     target: /var/lib/mysql
+    networks:
+      - internal
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:9.0.3
+    deploy:
+      labels:
+        traefik.port: 8080
+        traefik.frontend.rule: Host:${DOMAIN:-keycloak.localhost}
+        traefik.frontend.passHostHeader: 'true'
+        traefik.protocol: http
+        traefik.docker.network: traefik-net
+    environment:
+      - DB_VENDOR=mariadb
+      - DB_ADDR=mariadb
+      - DB_DATABASE=keycloak
+      - DB_USER=keycloak
+      - DB_PASSWORD=password
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin 
+      - PROXY_ADDRESS_FORWARDING=true
+    networks:
+      - traefik-net
+      - internal
+    depends_on:
+      - mariadb
+
+networks:
+  traefik-net:
+    external: true
+  internal:
+    internal: true
