@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  demo-db:
+    image: postgres:12
+    hostname: demo-db
+    networks:
+      - listmonk
+    ports:
+      - "5432:5432"
+    deploy:
+      labels:
+        traefik.enabled: 'false'
+    environment:
+      - POSTGRES_PASSWORD=listmonk
+      - POSTGRES_USER=listmonk
+      - POSTGRES_DB=listmonk
+    # volumes:
+    #   - type: volume
+    #     source: listmonk-data
+    #     target: /var/lib/postgresql/data
+  
+  listmonk:
+    image: listmonk/listmonk:latest
+    command: [sh, -c, "yes | ./listmonk --install && ./listmonk"]
+    deploy:
+      labels:
+        - traefik.port=9000
+        - traefik.enable=true
+        - traefik.frontend.rule=Host:${DOMAIN:-listmonk.localhost}
+        - traefik.protocol=http
+    networks:
+      - listmonk
+      - traefik-net
+    depends_on:
+      - db
+
+networks:
+  traefik-net:
+    external: true
+  listmonk:
+    internal: true
