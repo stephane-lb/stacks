@@ -1,3 +1,5 @@
+DOMAIN=localhost
+
 # Copy from https://medium.com/lebouchondigital/passer-des-arguments-%C3%A0-une-target-gnu-make-1ddab618c32f
 SUPPORTED_COMMANDS := deploy
 SUPPORTS_MAKE_ARGS := $(findstring $(firstword $(MAKECMDGOALS)), $(SUPPORTED_COMMANDS))
@@ -12,7 +14,7 @@ start:
 	@docker swarm init > /dev/null 2>&1
 	@echo "Deploy traefik reverse-proxy..."
 	@docker network create --driver=overlay traefik-net >/dev/null 2>&1
-	@docker stack deploy -c traefik.yml traefik > /dev/null 2>&1
+	@DOMAIN=traefik.$(DOMAIN) docker stack deploy -c traefik.yml traefik > /dev/null 2>&1
 	@echo "Ready to deploy"
 
 .PHONY: stop
@@ -21,7 +23,7 @@ stop:
 
 .PHONY: deploy
 deploy:
-	@docker stack deploy -c $(COMMAND_ARGS).yml my$(COMMAND_ARGS)
+	@DOMAIN=$(COMMAND_ARGS).$(DOMAIN) docker stack deploy -c $(COMMAND_ARGS).yml my$(COMMAND_ARGS)
 
 .PHONY: kill
 kill:
